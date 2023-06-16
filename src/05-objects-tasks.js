@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 /* ************************************************************************************************
  *                                                                                                *
  * Please read the following tutorial before implementing tasks:                                   *
@@ -41,8 +42,8 @@ function Rectangle(width, height) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -57,8 +58,9 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  return Object.setPrototypeOf(obj, proto);
 }
 
 
@@ -104,11 +106,11 @@ function fromJSON(/* proto, json */) {
  *      builder.combine(
  *          builder.element('table').id('data'),
  *          '~',
- *           builder.combine(
- *               builder.element('tr').pseudoClass('nth-of-type(even)'),
- *               ' ',
- *               builder.element('td').pseudoClass('nth-of-type(even)')
- *           )
+  *           builder.combine(
+  *               builder.element('tr').pseudoClass('nth-of-type(even)'),
+  *               ' ',
+  *               builder.element('td').pseudoClass('nth-of-type(even)')
+  *           )
  *      )
  *  ).stringify()
  *    => 'div#main.container.draggable + table#data ~ tr:nth-of-type(even)   td:nth-of-type(even)'
@@ -117,33 +119,132 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  MySelector: class {
+    constructor(method, value) {
+      this.elementField = '';
+      this.idField = '';
+      this.classField = [];
+      this.attrField = [];
+      this.pseudoClassField = [];
+      this.pseudoElementField = '';
+      if (method === 'id') {
+        this[`${method}Field`] = `#${value}`;
+      } else if (method === 'pseudoElement') {
+        this[`${method}Field`] = `::${value}`;
+      } else if (method === 'element') {
+        this[`${method}Field`] = value;
+      } else if (method === 'class') {
+        this.classField.push(`.${value}`);
+      } else if (method === 'attr') {
+        this.attrField.push(`[${value}]`);
+      } else if (method === 'pseudoClass') {
+        this.pseudoClassField.push(`:${value}`);
+      }
+    }
+
+
+    element(value) {
+      // eslint-disable-next-line max-len
+      if (this.idField || this.classField.length > 0 || this.attrField.length > 0 || this.pseudoClassField.length > 0 || this.pseudoElementField) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+      if (this.elementField) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      }
+      this.elementField = value;
+      return this;
+    }
+
+    id(value) {
+      // eslint-disable-next-line max-len
+      if (this.classField.length > 0 || this.attrField.length > 0 || this.pseudoClassField.length > 0 || this.pseudoElementField) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+      if (this.idField) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      }
+      this.idField = `#${value}`;
+      return this;
+    }
+
+    class(value) {
+      // eslint-disable-next-line max-len
+      if (this.attrField.length > 0 || this.pseudoClassField.length > 0 || this.pseudoElementField) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+      this.classField.push(`.${value}`);
+      return this;
+    }
+
+    attr(value) {
+      if (this.pseudoClassField.length > 0 || this.pseudoElementField) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+      this.attrField.push(`[${value}]`);
+      return this;
+    }
+
+    pseudoClass(value) {
+      if (this.pseudoElementField) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+      this.pseudoClassField.push(`:${value}`);
+      return this;
+    }
+
+    pseudoElement(value) {
+      if (this.pseudoElementField) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      }
+      this.pseudoElementField = `::${value}`;
+      return this;
+    }
+
+    stringify() {
+      return `${this.elementField}${this.idField}${this.classField.join('')}${this.attrField.join('')}${this.pseudoClassField.join('')}${this.pseudoElementField}`;
+    }
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new this.MySelector('element', value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new this.MySelector('id', value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new this.MySelector('class', value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new this.MySelector('attr', value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new this.MySelector('pseudoClass', value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new this.MySelector('pseudoElement', value);
   },
+
+  Combination: class {
+    constructor(selector1, combinator, selector2) {
+      this.selector1 = selector1;
+      this.combinator = combinator;
+      this.selector2 = selector2;
+    }
+
+    stringify() {
+      return `${this.selector1.stringify()} ${this.combinator} ${this.selector2.stringify()}`;
+    }
+  },
+
+  combine(selector1, combinator, selector2) {
+    return new this.Combination(selector1, combinator, selector2);
+  },
+
 };
 
 
