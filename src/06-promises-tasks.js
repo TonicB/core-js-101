@@ -28,8 +28,16 @@
  *      .catch((error) => console.log(error.message)) // 'Error: Wrong parameter is passed!
  *                                                    //  Ask her again.';
  */
-function willYouMarryMe(/* isPositiveAnswer */) {
-  throw new Error('Not implemented');
+function willYouMarryMe(isPositiveAnswer) {
+  return new Promise((res, rej) => {
+    if (isPositiveAnswer === undefined) {
+      rej(new Error('Wrong parameter is passed! Ask her again.'));
+    } else if (isPositiveAnswer) {
+      res('Hooray!!! She said "Yes"!');
+    } else {
+      res('Oh no, she said "No".');
+    }
+  });
 }
 
 
@@ -48,8 +56,8 @@ function willYouMarryMe(/* isPositiveAnswer */) {
  *    })
  *
  */
-function processAllPromises(/* array */) {
-  throw new Error('Not implemented');
+function processAllPromises(array) {
+  return Promise.all(array);
 }
 
 /**
@@ -71,15 +79,16 @@ function processAllPromises(/* array */) {
  *    })
  *
  */
-function getFastestPromise(/* array */) {
-  throw new Error('Not implemented');
+function getFastestPromise(array) {
+  return Promise.race(array);
 }
 
 /**
  * Return Promise object that should be resolved with value that is
  * a result of action with values of all the promises that exists in array.
  * If some of promise is rejected you should catch it and process the next one.
- *
+ * Вернуть промис, кот долж быть выаолнен со значением являющимся результатом
+ * действия со значениями всех промисов кот есть в массиве.
  * @param {Promise[]} array
  * @param {Function} action
  * @return {Promise}
@@ -92,9 +101,14 @@ function getFastestPromise(/* array */) {
  *    });
  *
  */
-function chainPromises(/* array, action */) {
-  throw new Error('Not implemented');
+function chainPromises(array, action) {
+  return array.reduce((acc, promise) => acc
+    .then((res) => promise
+      .then((ressy) => action(res, ressy))
+      .catch(() => {}))
+    .catch(() => {}));
 }
+
 
 module.exports = {
   willYouMarryMe,
